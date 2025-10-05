@@ -24,10 +24,10 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # --- Konfigurasi Bot ---
-TOKEN = "8126386813:AAFoxb566YJWBgCb60laesGtZhrH0RF425c"
-CHANNEL_WAJIB_ID = -1003087629808  # Ganti dengan ID Channel Wajib Anda
-GRUP_UTAMA_ID = -1002741223095      # Ganti dengan ID Grup Utama Anda
-INITIAL_ADMIN_ID = 1262626916      # ID Admin awal untuk inisialisasi
+TOKEN = "GANTI DENGAN TOKEN BOT ANDA"
+CHANNEL_WAJIB_ID = CHANNELID  # Ganti dengan ID Channel Wajib Anda
+GRUP_UTAMA_ID = GROUPID      # Ganti dengan ID Grup Utama Anda
+INITIAL_ADMIN_ID = ADMINID      # ID Admin awal untuk inisialisasi
 
 # --- States untuk Conversation Handlers ---
 (WAITING_MEDIA, WAITING_TEXT, WAITING_BUTTONS, WAITING_CONFIRMATION) = range(4)
