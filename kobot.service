@@ -1,0 +1,14 @@
+[Unit]
+Description=Kobot Telegram Service by Gemini
+After=network.target
+
+[Service]
+User=root
+Group=root
+WorkingDirectory=/root/kobot
+ExecStart=/root/kobot/venv/bin/python3 /root/kobot/bot.py
+Restart=always
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target
