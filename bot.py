@@ -37,27 +37,27 @@ INITIAL_ADMIN_ID = 1262626916      # ID Admin awal untuk inisialisasi
 # --- Fungsi Inisialisasi Perintah Bot ---
 async def post_init(application: Application):
     user_commands = [
-        BotCommand("start", "🚀 Memulai bot & verifikasi"),
-        BotCommand("help", "❓ Menampilkan pesan bantuan")
+        BotCommand("start", "Memulai bot & verifikasi"),
+        BotCommand("help", "Menampilkan pesan bantuan")
     ]
     await application.bot.set_my_commands(user_commands)
 
     admin_commands = user_commands + [
-        BotCommand("admin", "⚙️ Membuka panel kontrol admin"),
-        BotCommand("broadcast", "📢 Mengirim pesan ke semua user"),
-        BotCommand("setwelcome", "✏️ Mengatur pesan sambutan"),
-        BotCommand("gantichannel", "🆔 Mengatur ID Channel"),
-        BotCommand("gantigroup", "🆔 Mengatur ID Grup"),
-        BotCommand("listusers", "👥 Menampilkan daftar user"),
-        BotCommand("verifikasiulang", "🔄 Verifikasi ulang seorang user"),
-        BotCommand("settemplate", "📝 Mengatur template broadcast"),
-        BotCommand("broadcasttemplate", "🚀 Mengirim broadcast dari template"),
-        BotCommand("addadmin", "➕ Menambah admin baru"),
-        BotCommand("deladmin", "➖ Menghapus admin"),
-        BotCommand("listadmins", "👑 Menampilkan daftar admin")
+        BotCommand("admin", "Membuka panel kontrol admin"),
+        BotCommand("broadcast", "Mengirim pesan ke semua user"),
+        BotCommand("setwelcome", "Mengatur pesan sambutan"),
+        BotCommand("gantichannel", "Mengatur ID Channel"),
+        BotCommand("setchannellink", "Mengatur Link Channel"),
+        BotCommand("gantigroup", "Mengatur ID Grup"),
+        BotCommand("listusers", "Menampilkan daftar user"),
+        BotCommand("verifikasiulang", "Verifikasi ulang seorang user"),
+        BotCommand("settemplate", "Mengatur template broadcast"),
+        BotCommand("broadcasttemplate", "Mengirim broadcast dari template"),
+        BotCommand("addadmin", "Menambah admin baru"),
+        BotCommand("deladmin", "Menghapus admin"),
+        BotCommand("listadmins", "Menampilkan daftar admin")
     ]
     
-    # Atur perintah untuk setiap admin yang ada di database
     all_admins = get_all_admins()
     for admin_id in all_admins:
         try:
@@ -176,9 +176,11 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 Pastikan kamu sudah bergabung di <b>Channel Pemanasan</b> kami untuk mendapatkan akses.
 Klik tombol di bawah ini, lalu verifikasi dirimu."""
         
-        channel_id_str = get_config('channel_wajib_id')
-        channel_id = int(channel_id_str) if channel_id_str else CHANNEL_WAJIB_ID
-        channel_url = f"https://t.me/c/{str(channel_id)[4:]}" if str(channel_id).startswith('-100') else ""
+        # Gunakan link invite yang sudah di-set, bukan generate dari ID
+        channel_url = get_config('channel_invite_link')
+        if not channel_url:
+            logger.warning("Link undangan channel (channel_invite_link) belum diatur!")
+            channel_url = "https://t.me/telegram" # Fallback URL jika belum di-set
 
         buttons = [
             [InlineKeyboardButton("➡️ JOIN CHANNEL PEMANASAN", url=channel_url)],
@@ -306,10 +308,11 @@ Perintah yang tersedia:
 <code>/addadmin [USER_ID]</code> - Menambah admin
 <code>/deladmin [USER_ID]</code> - Menghapus admin"""
     elif command == 'admin_manage_ids':
-        text = """<b>🆔 Manajemen ID</b>
+        text = """<b>🆔 Manajemen ID & Link</b>
 
 Perintah yang tersedia:
 <code>/gantichannel [ID_CHANNEL]</code>
+<code>/setchannellink [LINK_CHANNEL]</code>
 <code>/gantigroup [ID_GRUP]</code>"""
     elif command == 'admin_reverify':
         text = """<b>🔄 Perintah Verifikasi Ulang</b>
@@ -350,8 +353,8 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 Berikut beberapa petunjuk untukmu:
 
-• Gunakan <code>/start</code> untuk memulai petualanganmu & mendapatkan akses VVIP.
-• Jika ada masalah, coba ulangi dari awal.
+- Gunakan <code>/start</code> untuk memulai petualanganmu & mendapatkan akses VVIP.
+- Jika ada masalah, coba ulangi dari awal.
 
 <i>Kesabaran adalah kunci kenikmatan...</i> 😉"""
     )
@@ -705,6 +708,18 @@ async def ganti_grup(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except (IndexError, ValueError):
         await update.message.reply_text("⚠️ Gunakan format: /gantigroup <grup_id>")
 
+async def set_channel_link(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not is_admin(update.effective_user.id): return
+    try:
+        link = context.args[0]
+        if not (link.startswith("https://t.me/+") or link.startswith("https://t.me/joinchat/")):
+            await update.message.reply_text("⚠️ Link tidak valid. Harap gunakan link undangan channel privat (contoh: https://t.me/+...)")
+            return
+        set_config('channel_invite_link', link)
+        await update.message.reply_html(f"✅ *Link Undangan Channel berhasil diatur ke:* {link}")
+    except (IndexError):
+        await update.message.reply_text("⚠️ Gunakan format: /setchannellink <link_undangan>")
+
 # --- Fungsi Utama ---
 def main():
     init_db()
@@ -755,6 +770,7 @@ def main():
     application.add_handler(CommandHandler("listusers", list_users))
     application.add_handler(CommandHandler("verifikasiulang", reverify_user))
     application.add_handler(CommandHandler("gantichannel", ganti_channel))
+    application.add_handler(CommandHandler("setchannellink", set_channel_link))
     application.add_handler(CommandHandler("gantigroup", ganti_grup))
     application.add_handler(CommandHandler("broadcasttemplate", broadcast_template))
     application.add_handler(CommandHandler("addadmin", add_admin_command))
